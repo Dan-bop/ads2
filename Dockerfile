@@ -1,14 +1,16 @@
-# Paso 1: Construir la aplicación usando Maven Wrapper
+# Paso 1: Construir la aplicación
 FROM maven:3.8.5-openjdk-17 AS build
+# Creamos una carpeta de trabajo limpia
+WORKDIR /app
+# Copiamos los archivos ahí
 COPY . .
-# Damos permisos de ejecución al archivo mvnw (vital para Render)
-RUN chmod +x mvnw
-# Usamos ./mvnw para asegurar que use la versión correcta del proyecto
-RUN ./mvnw clean package -DskipTests
+# Damos permisos y compilamos
+RUN chmod +x mvnw && ./mvnw clean package -DskipTests
 
 # Paso 2: Ejecutar la aplicación
 FROM openjdk:17.0.1-jdk-slim
-COPY --from=build /target/*.jar app.jar
+WORKDIR /app
+# Copiamos el resultado del paso anterior
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 10000
-# Forzamos a que use el puerto 10000 que configuramos en Render
 ENTRYPOINT ["java","-jar","app.jar","--server.port=10000"]
